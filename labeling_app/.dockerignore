@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+labels.db*
+app_sqlite_local.py
+data/
+.env
+nginx/
+DEPLOY.md
+README.md

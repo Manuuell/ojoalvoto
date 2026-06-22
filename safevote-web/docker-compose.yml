@@ -1,0 +1,43 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: safevote
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-safevote}
+      POSTGRES_DB: safevote
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U safevote"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: ./api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://safevote:${DB_PASSWORD:-safevote}@db:5432/safevote
+      PDFS_DIR: /data/pdfs
+      CACHE_DIR: /data/cache
+      MANIFEST: /data/manifest.csv
+      PORT: 8000
+    volumes:
+      - ./data:/data        # manifest.csv + pdfs/ (opcional; si no, baja de la Registraduría)
+
+  web:
+    build: ./web
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      API_URL: http://api:8000   # Next proxea /api/* a NestJS
+    ports:
+      - "127.0.0.1:4500:3000"    # 4500 en el host (3000/3001 ocupados por otros contenedores)
+
+volumes:
+  pgdata:

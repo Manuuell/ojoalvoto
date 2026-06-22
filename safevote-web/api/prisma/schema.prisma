@@ -1,0 +1,36 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Acta {
+  actaId     String    @id @map("acta_id")
+  dept       String
+  mun        String
+  zona       String
+  stand      String
+  mesa       String
+  hash       String
+  status     String    @default("pending") // pending | in_progress | done | skipped
+  assignedAt DateTime? @map("assigned_at")
+  labeler    String?
+  flagged    Boolean   @default(false)
+  label      Label?
+
+  @@index([status])
+  @@map("actas")
+}
+
+model Label {
+  actaId    String   @id @map("acta_id")
+  data      Json
+  labeler   String?
+  createdAt DateTime @default(now()) @map("created_at")
+  acta      Acta     @relation(fields: [actaId], references: [actaId])
+
+  @@map("labels")
+}
